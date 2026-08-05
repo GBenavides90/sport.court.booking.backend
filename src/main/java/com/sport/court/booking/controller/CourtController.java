@@ -20,7 +20,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/courts")
-@CrossOrigin(origins = "*") // Para desarrollo local
 @RequiredArgsConstructor
 public class CourtController {
 
