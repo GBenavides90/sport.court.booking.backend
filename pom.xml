@@ -14,7 +14,7 @@
 	<name>backend</name>
 	<description>Sport Court Booking Backend</description>
 	<properties>
-		<java.version>25</java.version>
+		<java.version>21</java.version>
 		<lombok.version>1.18.46</lombok.version>
 	</properties>
 	<dependencies>
