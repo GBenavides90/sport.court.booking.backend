@@ -22,6 +22,18 @@ public class CourtService {
         return courtRepository.save(court);
     }
 
+    /**
+     * HU4 — Retorna canchas en orden aleatorio cuando random=true.
+     * Cumple criterio: "verdaderamente aleatoria, sin seguir un patrón previsible"
+     */
+    public Page<Court> getAllCourts(Pageable pageable, boolean random) {
+        if (random) {
+            return courtRepository.findAllRandom(pageable);
+        }
+        return courtRepository.findAll(pageable);
+    }
+
+    /** Compatibilidad hacia atrás — usado por Admin (listado no aleatorio) */
     public Page<Court> getAllCourts(Pageable pageable) {
         return courtRepository.findAll(pageable);
     }
