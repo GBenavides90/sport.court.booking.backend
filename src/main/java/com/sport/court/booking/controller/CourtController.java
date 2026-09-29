@@ -65,12 +65,14 @@ public class CourtController {
         }
     }
 
-    @Operation(summary = "Listar canchas paginadas")
+    @Operation(summary = "Listar canchas paginadas",
+            description = "Cuando random=true devuelve resultados en orden aleatorio (HU4)")
     @GetMapping
     public ResponseEntity<Page<Court>> getAllCourts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(courtService.getAllCourts(PageRequest.of(page, size)));
+            @RequestParam(defaultValue = "0")     int page,
+            @RequestParam(defaultValue = "10")    int size,
+            @RequestParam(defaultValue = "false") boolean random) {
+        return ResponseEntity.ok(courtService.getAllCourts(PageRequest.of(page, size), random));
     }
 
     @Operation(summary = "Obtener cancha por ID")
