@@ -5,8 +5,11 @@ import com.sport.court.booking.repository.CourtRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -24,11 +27,19 @@ public class CourtService {
 
     /**
      * HU4 — Retorna canchas en orden aleatorio cuando random=true.
-     * Cumple criterio: "verdaderamente aleatoria, sin seguir un patrón previsible"
+     * Implementado en memoria para evitar errores de dialecto SQL (como RAND() vs RANDOM())
+     * que estaban causando fallos de despliegue en producción.
      */
     public Page<Court> getAllCourts(Pageable pageable, boolean random) {
         if (random) {
-            return courtRepository.findAllRandom(pageable);
+            List<Court> allCourts = courtRepository.findAll();
+            Collections.shuffle(allCourts);
+            
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), allCourts.size());
+            
+            List<Court> pageContent = allCourts.subList(start, end);
+            return new PageImpl<>(pageContent, pageable, allCourts.size());
         }
         return courtRepository.findAll(pageable);
     }
