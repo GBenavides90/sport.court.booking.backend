@@ -7,6 +7,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "courts")
 @Data
@@ -26,11 +29,22 @@ public class Court {
     @Column(length = 1000)
     private String description;
 
-    @NotBlank(message = "La categoría deportiva es obligatoria")
-    private String category; // e.g. futbol, basquet, tenis
+    /** HU12 — categoría / tipo de deporte (entidad Category). */
+    @NotNull(message = "La categoría deportiva es obligatoria")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     @NotNull(message = "La capacidad es obligatoria")
     private Integer capacity;
 
     private String imageUrl;
+
+    /** HU17 / HU18 — características asociadas a la cancha. */
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "court_features",
+            joinColumns = @JoinColumn(name = "court_id"),
+            inverseJoinColumns = @JoinColumn(name = "feature_id"))
+    private Set<Feature> features = new LinkedHashSet<>();
 }
