@@ -19,7 +19,7 @@ public class WebConfig implements WebMvcConfigurer {
                 ? System.getenv("FRONTEND_URL")
                 : "http://localhost:5173";
         registry.addMapping("/**")
-                .allowedOriginPatterns(frontendUrl, "http://localhost:5173", "https://*.vercel.app")
+                .allowedOriginPatterns(frontendUrl, "http://localhost:*", "https://*.vercel.app", "https://*.onrender.com", "https://*.netlify.app")
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
