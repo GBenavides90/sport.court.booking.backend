@@ -7,6 +7,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -33,6 +36,7 @@ public class Court {
     @NotNull(message = "La categoría deportiva es obligatoria")
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
+    @NotFound(action = NotFoundAction.IGNORE)
     private Category category;
 
     @NotNull(message = "La capacidad es obligatoria")

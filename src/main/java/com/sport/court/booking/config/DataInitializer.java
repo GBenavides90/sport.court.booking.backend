@@ -109,6 +109,23 @@ public class DataInitializer implements ApplicationRunner {
             // Base nueva: no existe la columna de texto heredada `category`. No hay nada que migrar.
             log.debug("Sin migración de categorías heredadas: {}", e.getMessage());
         }
+
+        // Si todavía existen canchas con category_id NULL o inválido, asignar la primera categoría disponible
+        try {
+            Category defaultCat = categoryRepository.findAll().stream().findFirst().orElse(null);
+            if (defaultCat != null) {
+                int fixedNull = jdbc.update("UPDATE courts SET category_id = ? WHERE category_id IS NULL", defaultCat.getId());
+                int fixedOrphan = jdbc.update(
+                        "UPDATE courts c LEFT JOIN categories cat ON c.category_id = cat.id SET c.category_id = ? WHERE cat.id IS NULL",
+                        defaultCat.getId());
+                if (fixedNull + fixedOrphan > 0) {
+                    log.info("Corregidas {} canchas huérfanas asociándolas a la categoría '{}'",
+                            fixedNull + fixedOrphan, defaultCat.getTitle());
+                }
+            }
+        } catch (DataAccessException e) {
+            log.warn("Aviso al verificar canchas huérfanas: {}", e.getMessage());
+        }
     }
 
     private void seedAdmin() {
