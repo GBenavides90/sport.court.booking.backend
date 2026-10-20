@@ -46,6 +46,14 @@ public class EmailService {
                     user.getEmail(), loginUrl());
             return false;
         }
+        if (sender instanceof org.springframework.mail.javamail.JavaMailSenderImpl impl) {
+            String host = impl.getHost();
+            if (host == null || host.isBlank() || "localhost".equalsIgnoreCase(host)) {
+                log.info("SMTP no configurado en entorno de despliegue (host: {}) — confirmación simulada para {}",
+                        host, user.getEmail());
+                return false;
+            }
+        }
         try {
             MimeMessage message = sender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
