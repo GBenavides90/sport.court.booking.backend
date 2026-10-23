@@ -187,4 +187,32 @@ class CourtControllerTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.totalElements").value(6))
                 .andExpect(jsonPath("$.content", hasSize(6)));
     }
+
+    @Test
+    @DisplayName("TC-03 / TC-04 Búsqueda de canchas por palabra clave y sugerencias interactivas (HU22)")
+    void tc04_searchAndSuggestions() throws Exception {
+        seedCourts();
+        // Búsqueda por término (TC-04)
+        mvc.perform(get("/api/courts/search").param("query", "F1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].name").value("F1"));
+
+        // Sugerencias de autocompletado (TC-03)
+        mvc.perform(get("/api/courts/suggestions").param("q", "F1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0]").value("F1"));
+    }
+
+    @Test
+    @DisplayName("TC-08 / TC-09 Consultar fechas ocupadas de la cancha para disponibilidad (HU23)")
+    void tc08_courtAvailability() throws Exception {
+        seedCourts();
+        Court court = courtRepository.findAll().get(0);
+        mvc.perform(get("/api/courts/" + court.getId() + "/availability"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(org.hamcrest.Matchers.greaterThan(0)));
+    }
 }

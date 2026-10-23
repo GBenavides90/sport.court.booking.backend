@@ -47,6 +47,9 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/error").permitAll()
                         // HU16 — todo lo administrativo exige rol ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // HU24 / HU25 / HU28 — favoritos y valoraciones de usuarios autenticados
+                        .requestMatchers(HttpMethod.POST, "/api/courts/*/reviews").authenticated()
+                        .requestMatchers("/api/favorites/**").authenticated()
                         .requestMatchers("/api/courts/**", "/api/categories/**", "/api/features/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex

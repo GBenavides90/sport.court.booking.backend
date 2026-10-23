@@ -43,4 +43,11 @@ public class CategoryController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Error al subir imagen"));
         }
     }
+
+    @Operation(summary = "Eliminar categoría (ADMIN) — HU29")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        categoryService.delete(id);
+        return ResponseEntity.ok().build();
+    }
 }

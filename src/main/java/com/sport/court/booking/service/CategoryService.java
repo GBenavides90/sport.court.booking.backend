@@ -1,20 +1,24 @@
 package com.sport.court.booking.service;
 
 import com.sport.court.booking.domain.Category;
+import com.sport.court.booking.domain.Court;
 import com.sport.court.booking.exception.ConflictException;
 import com.sport.court.booking.exception.NotFoundException;
 import com.sport.court.booking.repository.CategoryRepository;
+import com.sport.court.booking.repository.CourtRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/** HU21 — Agregar categoría (título, descripción e imagen representativa). */
+/** HU21 — Agregar categoría. HU29 — Eliminar categoría con confirmación preventiva. */
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final CourtRepository courtRepository;
 
     public List<Category> listAll() {
         return categoryRepository.findAll();
@@ -35,5 +39,17 @@ public class CategoryService {
         c.setDescription(description.trim());
         c.setImageUrl(imageUrl);
         return categoryRepository.save(c);
+    }
+
+    /** HU29 — Eliminar categoría desvinculando de forma segura las canchas asociadas. */
+    @Transactional
+    public void delete(Long id) {
+        Category c = getById(id);
+        List<Court> courts = courtRepository.findByCategoryId(id);
+        for (Court court : courts) {
+            court.setCategory(null);
+            courtRepository.save(court);
+        }
+        categoryRepository.delete(c);
     }
 }

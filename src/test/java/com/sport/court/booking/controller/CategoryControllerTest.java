@@ -75,4 +75,28 @@ class CategoryControllerTest extends AbstractIntegrationTest {
                         .param("title", existing.getTitle().toUpperCase()).param("description", "otra"))
                 .andExpect(status().isConflict());
     }
+
+    @Test
+    @DisplayName("TC-45 / TC-46 Eliminar categoría por administrador desvincula canchas")
+    void tc46_deleteCategory() throws Exception {
+        Category cat = category("Básquet");
+        com.sport.court.booking.domain.Court court = court("Cancha Básquet", cat);
+
+        // Usuario no admin no puede eliminar
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/categories/" + cat.getId()))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/categories/" + cat.getId())
+                        .header("Authorization", userToken()))
+                .andExpect(status().isForbidden());
+
+        // Administrador elimina con éxito
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/categories/" + cat.getId())
+                        .header("Authorization", adminToken()))
+                .andExpect(status().isOk());
+
+        assertThat(categoryRepository.existsById(cat.getId())).isFalse();
+        // La cancha sigue existiendo con categoría null
+        com.sport.court.booking.domain.Court reloaded = courtRepository.findById(court.getId()).orElseThrow();
+        assertThat(reloaded.getCategory()).isNull();
+    }
 }

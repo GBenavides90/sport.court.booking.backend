@@ -93,6 +93,28 @@ public class CourtController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Búsqueda interactiva de canchas (HU22)")
+    @GetMapping("/search")
+    public ResponseEntity<List<Court>> searchCourts(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(value = "categoryIds", required = false) List<Long> categoryIds) {
+        return ResponseEntity.ok(courtService.search(query, startDate, endDate, toSet(categoryIds)));
+    }
+
+    @Operation(summary = "Sugerencias de autocompletado de búsqueda (HU22)")
+    @GetMapping("/suggestions")
+    public ResponseEntity<List<String>> getSuggestions(@RequestParam(defaultValue = "") String q) {
+        return ResponseEntity.ok(courtService.getSuggestions(q));
+    }
+
+    @Operation(summary = "Visualizar fechas ocupadas de la cancha (HU23)")
+    @GetMapping("/{id}/availability")
+    public ResponseEntity<List<String>> getCourtAvailability(@PathVariable Long id) {
+        return ResponseEntity.ok(courtService.getOccupiedDates(id));
+    }
+
     @Operation(summary = "Eliminar cancha por ID (ADMIN)")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteCourt(@PathVariable Long id) {

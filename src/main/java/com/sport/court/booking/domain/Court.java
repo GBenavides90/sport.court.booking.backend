@@ -32,8 +32,7 @@ public class Court {
     @Column(length = 1000)
     private String description;
 
-    /** HU12 — categoría / tipo de deporte (entidad Category). */
-    @NotNull(message = "La categoría deportiva es obligatoria")
+    /** HU12 — categoría / tipo de deporte (entidad Category). Requerida en creación/edición vía servicio. */
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
     @NotFound(action = NotFoundAction.IGNORE)
@@ -51,4 +50,21 @@ public class Court {
             joinColumns = @JoinColumn(name = "court_id"),
             inverseJoinColumns = @JoinColumn(name = "feature_id"))
     private Set<Feature> features = new LinkedHashSet<>();
+
+    /** HU28 — Puntuación media dinámica y total de valoraciones */
+    @Column(nullable = false)
+    private Double averageRating = 5.0;
+
+    @Column(nullable = false)
+    private Integer reviewCount = 0;
+
+    /** HU26 — Bloque de políticas del producto (columnas con título y descripción) */
+    @Column(length = 2000)
+    private String rules = "Puntualidad en el inicio y término del turno de juego. Respetar al personal y a otros jugadores. Prohibido fumar, ingresar con mascotas o consumir bebidas alcohólicas dentro de la cancha.";
+
+    @Column(length = 2000)
+    private String cancellationPolicy = "Cancelaciones permitidas sin costo hasta 24 horas antes del horario reservado. Las solicitudes posteriores o no presentarse están sujetas a cobro del 100%. Reprogramaciones sujetas a disponibilidad.";
+
+    @Column(length = 2000)
+    private String healthPolicy = "Uso obligatorio de calzado deportivo adecuado a la superficie de la cancha. Contar con hidratación personal. El complejo dispone de botiquín de primeros auxilios y protocolo de emergencias.";
 }

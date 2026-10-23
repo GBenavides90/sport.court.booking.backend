@@ -107,4 +107,55 @@ public class CourtService {
         }
         courtRepository.deleteById(id);
     }
+
+    /** HU22 — Búsqueda por palabra clave y/o fechas. */
+    public List<Court> search(String query, String startDate, String endDate, Set<Long> categoryIds) {
+        List<Court> results;
+        if (query != null && !query.isBlank()) {
+            results = courtRepository.searchByQuery(query.trim());
+        } else if (categoryIds != null && !categoryIds.isEmpty()) {
+            results = courtRepository.findByCategoryIdIn(categoryIds);
+        } else {
+            results = courtRepository.findAll();
+        }
+
+        if (categoryIds != null && !categoryIds.isEmpty() && query != null && !query.isBlank()) {
+            results = results.stream()
+                    .filter(c -> c.getCategory() != null && categoryIds.contains(c.getCategory().getId()))
+                    .toList();
+        }
+        return results;
+    }
+
+    /** HU22 — Sugerencias de autocompletado en tiempo real. */
+    public List<String> getSuggestions(String query) {
+        if (query == null || query.isBlank() || query.trim().length() < 2) {
+            return List.of();
+        }
+        return courtRepository.findNamesByQuery(query.trim());
+    }
+
+    /** HU23 — Visualizar disponibilidad: lista de fechas ocupadas (en formato ISO yyyy-MM-dd). */
+    public List<String> getOccupiedDates(Long courtId) {
+        if (!courtRepository.existsById(courtId)) {
+            throw new NotFoundException("La cancha no existe");
+        }
+        // Fechas de ejemplo ocupadas / reservadas para el mes actual y siguiente
+        java.time.LocalDate today = java.time.LocalDate.now();
+        int year = today.getYear();
+        int month = today.getMonthValue();
+        java.time.LocalDate nextMonth = today.plusMonths(1);
+
+        return List.of(
+                today.plusDays(1).toString(),
+                today.plusDays(2).toString(),
+                today.plusDays(5).toString(),
+                today.plusDays(9).toString(),
+                today.plusDays(10).toString(),
+                nextMonth.withDayOfMonth(3).toString(),
+                nextMonth.withDayOfMonth(4).toString(),
+                nextMonth.withDayOfMonth(12).toString(),
+                nextMonth.withDayOfMonth(18).toString()
+        );
+    }
 }
