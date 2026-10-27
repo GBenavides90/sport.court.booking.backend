@@ -43,6 +43,12 @@ public class Court {
 
     private String imageUrl;
 
+    /** HU6 — Galería de imágenes múltiples por producto (hasta 5 fotos) */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "court_images", joinColumns = @JoinColumn(name = "court_id"))
+    @Column(name = "image_url", length = 1000)
+    private java.util.List<String> images = new java.util.ArrayList<>();
+
     /** HU17 / HU18 — características asociadas a la cancha. */
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

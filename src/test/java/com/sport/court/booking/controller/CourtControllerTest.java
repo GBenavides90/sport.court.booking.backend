@@ -215,4 +215,30 @@ class CourtControllerTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(org.hamcrest.Matchers.greaterThan(0)));
     }
+
+    @Test
+    @DisplayName("TC-10 Soporte de galería de múltiples imágenes al registrar cancha")
+    void fix06_multiImageGallery() throws Exception {
+        Category cat = category("Pádel");
+        String admin = adminToken();
+
+        mvc.perform(multipart("/api/courts")
+                        .header("Authorization", admin)
+                        .param("name", "Pádel Gallery Arena")
+                        .param("description", "Cancha con galería completa")
+                        .param("categoryId", cat.getId().toString())
+                        .param("capacity", "4")
+                        .param("galleryImages", "https://img.com/padel1.jpg")
+                        .param("galleryImages", "https://img.com/padel2.jpg")
+                        .param("galleryImages", "https://img.com/padel3.jpg")
+                        .param("galleryImages", "https://img.com/padel4.jpg"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.images", hasSize(4)));
+
+        Court saved = courtRepository.findAll().stream()
+                .filter(c -> "Pádel Gallery Arena".equals(c.getName()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(saved.getImages()).hasSize(4);
+    }
 }

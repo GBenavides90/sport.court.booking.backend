@@ -85,4 +85,20 @@ class ReviewControllerTest extends AbstractIntegrationTest {
                         .content("{\"score\":0,\"comment\":\"Invalido\"}"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    @DisplayName("TC-43 Validar aceptación de alias rating y score en reseñas")
+    void fix28_ratingAliasAccepted() throws Exception {
+        String token = userToken();
+        Category cat = category("Fútbol");
+        Court c = court("Cancha Maracaná", cat);
+
+        mvc.perform(post("/api/courts/" + c.getId() + "/reviews")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rating\":5,\"comment\":\"Excelente experiencia y servicio\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.score").value(5))
+                .andExpect(jsonPath("$.comment").value("Excelente experiencia y servicio"));
+    }
 }

@@ -31,7 +31,7 @@ public class CourtController {
     private final FileStorageService fileStorageService;
 
     @Operation(summary = "Crear nueva cancha (ADMIN)",
-            description = "Crea una cancha con categoría, características y opcionalmente una imagen")
+            description = "Crea una cancha con categoría, características y opcionalmente galería de imágenes (HU6)")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createCourt(
             @RequestParam String name,
@@ -39,17 +39,28 @@ public class CourtController {
             @RequestParam Long categoryId,
             @RequestParam Integer capacity,
             @RequestParam(value = "featureIds", required = false) List<Long> featureIds,
-            @RequestParam(value = "image", required = false) MultipartFile image) {
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam(value = "galleryImages", required = false) List<String> galleryImages) {
         try {
+            String mainImageUrl = fileStorageService.store(image);
+            List<String> allImages = new java.util.ArrayList<>();
+            if (mainImageUrl != null && !mainImageUrl.isBlank()) allImages.add(mainImageUrl);
+            if (galleryImages != null) allImages.addAll(galleryImages);
             CourtInput in = new CourtInput(name, description, categoryId, capacity, toSet(featureIds),
-                    fileStorageService.store(image));
+                    mainImageUrl, allImages);
             return new ResponseEntity<>(courtService.createCourt(in), HttpStatus.CREATED);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Error al subir imagen"));
         }
     }
 
-    @Operation(summary = "Editar cancha (ADMIN)", description = "Permite cambiar categoría y características")
+    @Operation(summary = "Crear nueva cancha vía JSON (ADMIN)")
+    @PostMapping(value = "/json", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> createCourtJson(@RequestBody CourtInput in) {
+        return new ResponseEntity<>(courtService.createCourt(in), HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Editar cancha (ADMIN)", description = "Permite cambiar categoría, características e imágenes")
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateCourt(
             @PathVariable Long id,
@@ -58,14 +69,25 @@ public class CourtController {
             @RequestParam Long categoryId,
             @RequestParam Integer capacity,
             @RequestParam(value = "featureIds", required = false) List<Long> featureIds,
-            @RequestParam(value = "image", required = false) MultipartFile image) {
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam(value = "galleryImages", required = false) List<String> galleryImages) {
         try {
+            String mainImageUrl = fileStorageService.store(image);
+            List<String> allImages = new java.util.ArrayList<>();
+            if (mainImageUrl != null && !mainImageUrl.isBlank()) allImages.add(mainImageUrl);
+            if (galleryImages != null) allImages.addAll(galleryImages);
             CourtInput in = new CourtInput(name, description, categoryId, capacity, toSet(featureIds),
-                    fileStorageService.store(image));
+                    mainImageUrl, allImages);
             return ResponseEntity.ok(courtService.updateCourt(id, in));
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Error al subir imagen"));
         }
+    }
+
+    @Operation(summary = "Editar cancha vía JSON (ADMIN)")
+    @PutMapping(value = "/{id}/json", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateCourtJson(@PathVariable Long id, @RequestBody CourtInput in) {
+        return ResponseEntity.ok(courtService.updateCourt(id, in));
     }
 
     @Operation(summary = "Listar canchas paginadas",

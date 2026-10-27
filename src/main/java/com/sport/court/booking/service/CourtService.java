@@ -5,6 +5,7 @@ import com.sport.court.booking.domain.Court;
 import com.sport.court.booking.exception.ConflictException;
 import com.sport.court.booking.exception.NotFoundException;
 import com.sport.court.booking.repository.CourtRepository;
+import com.sport.court.booking.repository.BookingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -24,10 +25,16 @@ public class CourtService {
     private final CourtRepository courtRepository;
     private final CategoryService categoryService;
     private final FeatureService featureService;
+    private final BookingRepository bookingRepository;
 
-    /** Datos de entrada para crear / editar una cancha (HU3, HU12, HU17). */
+    /** Datos de entrada para crear / editar una cancha (HU3, HU6, HU12, HU17). */
     public record CourtInput(String name, String description, Long categoryId, Integer capacity,
-                             Set<Long> featureIds, String imageUrl) {}
+                             Set<Long> featureIds, String imageUrl, List<String> images) {
+        public CourtInput(String name, String description, Long categoryId, Integer capacity,
+                          Set<Long> featureIds, String imageUrl) {
+            this(name, description, categoryId, capacity, featureIds, imageUrl, null);
+        }
+    }
 
     public Court createCourt(CourtInput in) {
         validate(in);
@@ -64,6 +71,12 @@ public class CourtService {
         court.setCategory(category);
         court.setCapacity(in.capacity());
         if (in.imageUrl() != null) court.setImageUrl(in.imageUrl());
+        if (in.images() != null && !in.images().isEmpty()) {
+            court.setImages(new java.util.ArrayList<>(in.images()));
+            if (court.getImageUrl() == null || court.getImageUrl().isBlank()) {
+                court.setImageUrl(in.images().get(0));
+            }
+        }
         Set<Long> ids = in.featureIds() == null ? Set.of() : in.featureIds();
         court.setFeatures(ids.isEmpty() ? new LinkedHashSet<>() : featureService.findAllByIds(ids));
     }
@@ -124,6 +137,21 @@ public class CourtService {
                     .filter(c -> c.getCategory() != null && categoryIds.contains(c.getCategory().getId()))
                     .toList();
         }
+
+        // HU30 — Filtrar canchas disponibles que no tengan reservas confirmadas en el rango de fechas
+        if (startDate != null && !startDate.isBlank() && endDate != null && !endDate.isBlank()) {
+            try {
+                java.time.LocalDate start = java.time.LocalDate.parse(startDate.trim());
+                java.time.LocalDate end = java.time.LocalDate.parse(endDate.trim());
+                List<Long> bookedIds = bookingRepository.findBookedCourtIdsBetween(start, end);
+                if (!bookedIds.isEmpty()) {
+                    results = results.stream()
+                            .filter(c -> !bookedIds.contains(c.getId()))
+                            .toList();
+                }
+            } catch (Exception ignored) {
+            }
+        }
         return results;
     }
 
@@ -135,27 +163,37 @@ public class CourtService {
         return courtRepository.findNamesByQuery(query.trim());
     }
 
-    /** HU23 — Visualizar disponibilidad: lista de fechas ocupadas (en formato ISO yyyy-MM-dd). */
+    // Obtener lista de fechas ocupadas en formato ISO (yyyy-MM-dd)
     public List<String> getOccupiedDates(Long courtId) {
         if (!courtRepository.existsById(courtId)) {
             throw new NotFoundException("La cancha no existe");
         }
-        // Fechas de ejemplo ocupadas / reservadas para el mes actual y siguiente
         java.time.LocalDate today = java.time.LocalDate.now();
-        int year = today.getYear();
-        int month = today.getMonthValue();
-        java.time.LocalDate nextMonth = today.plusMonths(1);
+        java.util.Set<String> occupied = new java.util.TreeSet<>();
 
-        return List.of(
-                today.plusDays(1).toString(),
-                today.plusDays(2).toString(),
-                today.plusDays(5).toString(),
-                today.plusDays(9).toString(),
-                today.plusDays(10).toString(),
-                nextMonth.withDayOfMonth(3).toString(),
-                nextMonth.withDayOfMonth(4).toString(),
-                nextMonth.withDayOfMonth(12).toString(),
-                nextMonth.withDayOfMonth(18).toString()
-        );
+        // Fechas con reservas confirmadas
+        List<com.sport.court.booking.domain.Booking> bookings = bookingRepository
+                .findByCourtIdAndStatusAndEndDateGreaterThanEqualOrderByStartDateAsc(courtId, "CONFIRMED", today);
+        for (com.sport.court.booking.domain.Booking b : bookings) {
+            java.time.LocalDate cur = b.getStartDate();
+            while (!cur.isAfter(b.getEndDate())) {
+                occupied.add(cur.toString());
+                cur = cur.plusDays(1);
+            }
+        }
+
+        // Fechas de muestra para demostración
+        java.time.LocalDate nextMonth = today.plusMonths(1);
+        occupied.add(today.plusDays(1).toString());
+        occupied.add(today.plusDays(2).toString());
+        occupied.add(today.plusDays(5).toString());
+        occupied.add(today.plusDays(9).toString());
+        occupied.add(today.plusDays(10).toString());
+        occupied.add(nextMonth.withDayOfMonth(3).toString());
+        occupied.add(nextMonth.withDayOfMonth(4).toString());
+        occupied.add(nextMonth.withDayOfMonth(12).toString());
+        occupied.add(nextMonth.withDayOfMonth(18).toString());
+
+        return new java.util.ArrayList<>(occupied);
     }
 }

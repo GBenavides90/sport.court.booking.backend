@@ -50,6 +50,9 @@ public class SecurityConfig {
                         // HU24 / HU25 / HU28 — favoritos y valoraciones de usuarios autenticados
                         .requestMatchers(HttpMethod.POST, "/api/courts/*/reviews").authenticated()
                         .requestMatchers("/api/favorites/**").authenticated()
+                        // HU30 / HU31 / HU32 / HU33 — Reservas (Sprint 4)
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/court/**", "/api/bookings/available").permitAll()
+                        .requestMatchers("/api/bookings/**").authenticated()
                         .requestMatchers("/api/courts/**", "/api/categories/**", "/api/features/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex

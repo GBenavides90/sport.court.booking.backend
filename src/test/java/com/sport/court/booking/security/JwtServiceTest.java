@@ -26,6 +26,9 @@ class JwtServiceTest {
         Claims claims = jwt.parse(jwt.generateToken(user()));
         assertThat(claims.getSubject()).isEqualTo("ana@test.com");
         assertThat(claims.get("role", String.class)).isEqualTo("ADMIN");
+        assertThat(claims.get("firstName", String.class)).isEqualTo("Ana");
+        assertThat(claims.get("lastName", String.class)).isEqualTo("Pérez");
+        assertThat(claims.get("fullName", String.class)).isEqualTo("Ana Pérez");
         assertThat(claims.getId()).isNotBlank();
         assertThat(jwt.generateToken(user())).isNotEqualTo(jwt.generateToken(user()));
     }
